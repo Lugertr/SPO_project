@@ -127,7 +127,6 @@ export default class Parser {        // Помимо парсера в функ�
     parseLogic(): ExpressionNode {                                                  //функция сравнения двух переменных
         let leftNode = this.parseParentheses();
         let operator = this.match(tokenTypesList.LOGIC);
-        console.log(leftNode)
         while (operator != null) {
             const rightNode = this.parseParentheses();
             leftNode = new BinOperationNode(operator, leftNode, rightNode);
@@ -164,7 +163,6 @@ export default class Parser {        // Помимо парсера в функ�
     parseIf(operatorLog: Token | null): ExpressionNode | null{              //Обработка while, if и else if
         if (this.match(tokenTypesList.LPAR) != null) {
             let CycleChek = this.parseLogic();
-            console.log(CycleChek)
             this.require(tokenTypesList.RPAR);
                 if ((CycleChek != null) && (operatorLog != null))  {
                     let Cycle = this.parseCycle();
@@ -425,7 +423,7 @@ export default class Parser {        // Помимо парсера в функ�
             }
         }
         if (node instanceof VariableNode) {
-            if (this.scope[node.variable.text]) {
+            if ((this.scope[node.variable.text]) || (this.scope[node.variable.text]==0)) {
                 return this.scope[node.variable.text]
             } else {
                 throw new Error(`Переменная с названием ${node.variable.text} не обнаружена`)
@@ -441,3 +439,4 @@ export default class Parser {        // Помимо парсера в функ�
     }
 
 }
+
