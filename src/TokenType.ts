@@ -24,8 +24,7 @@ export const tokenTypesList = {
     'ASSIGN': new TokenType('ASSIGN', '='),
     'LOG': new TokenType('LOG', 'print'),
     'VARIABLE': new TokenType('VARIABLE', '[a-zA-Z_][a-zA-Z_0-9]*'),
-    'NUMBER': new TokenType('NUMBER', "-?[1-9][0-9]*"),
+    'OP_1': new TokenType('OP_1', '[/*]'),
+    'NUMBER': new TokenType('NUMBER', "-?[0-9][0-9]*"),
     'OP': new TokenType('OP', '[+-]'),
-    'OP_1': new TokenType('OP_1', '[/*]')
-    //'NUMBER': new TokenType('NUMBER', "-?[0-9]*"),
 }
