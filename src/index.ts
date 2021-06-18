@@ -1,5 +1,6 @@
 import Lexer from "./Lexer";
 import Parser from "./Parser";
+import StackMachine from "./StackMachine";
 
 const code = './src/TestWhile.txt';
 
@@ -12,4 +13,5 @@ const parser = new Parser(lexer.tokenList);     //Создание парсер�
 const rootNode = parser.parseCode();            //Парсинг кода, распределение токенов по дереву,
                                                 //Их запись в стек и обработка
 
-parser.run(rootNode);                           //Выполнение кода
+const runCode = new StackMachine();
+runCode.run(rootNode);                           //Выполнение кода
