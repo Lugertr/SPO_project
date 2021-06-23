@@ -1,0 +1,9 @@
+a = new HashMap();
+put (a,bb,2);
+put (a,bbb,5);
+put (a,sss,0);
+put (a,ks3as,21);
+put (a,fds,55);
+print a;
+remove (a,sss);
+print a;
