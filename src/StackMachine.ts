@@ -5,6 +5,10 @@ import NumberNode from "./AST/NumberNode";
 import VariableNode from "./AST/VariableNode";
 import BinOperationNode from "./AST/BinOperationNode";
 import UnarOperationNode from "./AST/UnarOperationNode";
+import HashTable from "./HashTable";
+import ObjectNode from "./AST/ObjectNode";
+import ObjectOperation from "./AST/ObjectOperation";
+import KeyNode from "./AST/KeyNode";
 
 
 
@@ -69,22 +73,63 @@ export default class StackMachine {        // Помимо парсера в ф�
                     }
                     return
                 case tokenTypesList.OP.name:
-                    if (node.operator.text=="-") {
-                        return this.run(node.leftNode) - this.run(node.rightNode);}
-                    else  {
-                        return this.run(node.leftNode) + this.run(node.rightNode);}
+                    if (node.operator.text == "-") {
+                        return this.run(node.leftNode) - this.run(node.rightNode);
+                    } else {
+                        return this.run(node.leftNode) + this.run(node.rightNode);
+                    }
                 case tokenTypesList.OP_1.name:
-                    if (node.operator.text=="/") {
-                        return this.run(node.leftNode) / this.run(node.rightNode);}
-                    else {
-                        return this.run(node.leftNode) * this.run(node.rightNode);}
+                    if (node.operator.text == "/") {
+                        return this.run(node.leftNode) / this.run(node.rightNode);
+                    } else {
+                        return this.run(node.leftNode) * this.run(node.rightNode);
+                    }
 
                 case tokenTypesList.ASSIGN.name:
-                    const result = this.run(node.rightNode)
-                    const variableNode = <VariableNode>node.leftNode;
-                    this.scope[variableNode.variable.text] = result;
-                    return result;
+                        const result = this.run(node.rightNode)
+                        const variableNode = <VariableNode>node.leftNode;
+                        this.scope[variableNode.variable.text] = result;
+                        return result;
+                    }
+               // case tokenTypesList.NEW.name:
+                 //   const result = this.run(node.rightNode)
+                  //  const variableNode = <VariableNode>node.leftNode;
+                  //  this.scope[variableNode.variable.text] = result;
+                  //  return result;
+        }
+        if (node instanceof ObjectNode)
+        {
+            const result = new HashTable();
+            const variableNode = <VariableNode>node.leftNode;
+            this.scope[variableNode.variable.text] = result;
+            return result;
+        }
+        if (node instanceof ObjectOperation) {
+            switch (node.funk.text) {
+                case "put":
+                let obj = this.run(node.obj);
+                    obj.push(this.run(node.leftNode), this.run(node.rightNode));
+                    return obj;
+                case "clear":
+                    obj = this.run(node.obj);
+                    obj.clear();
+                    return obj;
+                case "size":
+                    obj = this.run(node.obj);
+                    return obj.showsize();
+                case "remove":
+                    obj = this.run(node.obj);
+                    obj.remove(this.run(node.leftNode));
+                    return obj;
+                case "get":
+                    obj = this.run(node.obj);
+                    return obj.get(this.run(node.leftNode));
             }
+        }
+        if (node instanceof KeyNode)
+        {
+            return node.key.text;
+
         }
         if (node instanceof VariableNode) {
             if ((this.scope[node.variable.text]) || (this.scope[node.variable.text]==0)) {
