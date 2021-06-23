@@ -6,8 +6,12 @@ import NumberNode from "./AST/NumberNode";
 import VariableNode from "./AST/VariableNode";
 import BinOperationNode from "./AST/BinOperationNode";
 import UnarOperationNode from "./AST/UnarOperationNode";
+import ObjectNode from "./AST/ObjectNode";
 import  stack from "./stack";
 import  RPN from "./RPN";
+import HashTable from "./HashTable";
+import ObjectOperation from "./AST/ObjectOperation";
+import KeyNode from "./AST/KeyNode";
 
 export default class Parser {        // Помимо парсера в функции parseFormula() представлен ПОЛИЗ
     tokens: Token[];                 // В этой же функции этот ПОЛИЗ обрабатывается в функции Calculation
@@ -54,7 +58,7 @@ export default class Parser {        // Помимо парсера в функ�
     PostIfChek(): ExpressionNode {                                             // проверка не выполнения if перед else_if или else
         let I = this.pos;
         this.pos = this.pos - 3;
-        if (this.match(tokenTypesList.CycleEnd)!= null) {
+        if (this.match(tokenTypesList.CycleEnd) != null) {
             while ((this.match(tokenTypesList.ELSE) == null) && (this.match(tokenTypesList.IF) == null) && (this.pos > 1)) {
                 this.pos = this.pos - 1;
             }
@@ -68,18 +72,18 @@ export default class Parser {        // Помимо парсера в функ�
                 return condition
             }
         }
-        this.pos = I-1;
+        this.pos = I - 1;
         throw new Error(`Ошибка на ${this.pos} позиции `)
     }
 
     //NotCondition(): ExpressionNode {
-      //  let lnode = new NumberNode(new Token(tokenTypesList.NUMBER, '1', this.pos));
+    //  let lnode = new NumberNode(new Token(tokenTypesList.NUMBER, '1', this.pos));
     //    let Rnode =   new NumberNode(new Token(tokenTypesList.NUMBER, '2', this.pos));
-      //  const NCondition = new Token(tokenTypesList.LOGIC, '==', this.pos);
-     //   return new BinOperationNode(NCondition, lnode, Rnode);
-   /// }
+    //  const NCondition = new Token(tokenTypesList.LOGIC, '==', this.pos);
+    //   return new BinOperationNode(NCondition, lnode, Rnode);
+    /// }
 
-    NotFCondition(F: ExpressionNode,T: ExpressionNode): ExpressionNode {
+    NotFCondition(F: ExpressionNode, T: ExpressionNode): ExpressionNode {
         const NCondition = new Token(tokenTypesList.LOGIC, '!=', this.pos);
         return new BinOperationNode(NCondition, T, F);
     }
@@ -88,41 +92,96 @@ export default class Parser {        // Помимо парсера в функ�
         let operatorLog = this.match(tokenTypesList.LOG);
         if (operatorLog != null) {
             return new UnarOperationNode(operatorLog, this.parseFormula())
-        }
-        else {
+        } else {
             operatorLog = this.match(tokenTypesList.WHILE);
-            if ((operatorLog) == null)
-            {
+            if ((operatorLog) == null) {
                 operatorLog = this.match(tokenTypesList.IF);
             }
             if ((operatorLog == null)) {
-                    operatorLog = this.match(tokenTypesList.ELSE_IF);
-                    if (operatorLog != null) {
-                        let out = this.parseELSEIF(operatorLog, this.PostIfChek());
-                        if (out != null) {
-                            return out;
+                operatorLog = this.match(tokenTypesList.ELSE_IF);
+                if (operatorLog != null) {
+                    let out = this.parseELSEIF(operatorLog, this.PostIfChek());
+                    if (out != null) {
+                        return out;
                     }
                 }
             }
             if (operatorLog == null) {
-                    operatorLog = this.match(tokenTypesList.ELSE);
+                operatorLog = this.match(tokenTypesList.ELSE);
                 if (operatorLog != null) {
                     let out = this.parseELSE(operatorLog, this.PostIfChek());
                     if (out != null) {
                         return out;
                     }
                 }
-            }
-            else {
+            } else {
                 let out = this.parseIf(operatorLog);
                 if (out != null) {
                     return out;
                 }
             }
+            return this.parseHash()
+        }
+    }
+
+    parseSize(operatorLog: any): ExpressionNode {
+        this.require(tokenTypesList.LPAR);
+        let variableNode = this.parseVariableOrNumber();
+        this.require(tokenTypesList.RPAR);
+        return new ObjectOperation(variableNode, variableNode, variableNode, operatorLog)
+    }
+
+    parseGet(operatorLog: any): ExpressionNode {
+        this.require(tokenTypesList.LPAR);
+        let variableNode = this.parseVariableOrNumber();
+        this.require(tokenTypesList.COMMA);
+        let thiskey = this.match(tokenTypesList.VARIABLE);
+        if (thiskey != null) {
+            let key = new KeyNode(thiskey);
+            this.require(tokenTypesList.RPAR);
+            return new ObjectOperation(variableNode, key, key, operatorLog)
         }
         throw new Error(`Ошибка на ${this.pos} позиции `)
     }
 
+
+    parseHash(): ExpressionNode {
+        let operatorLog = this.match(tokenTypesList.PUTHASH);
+        if (operatorLog != null) {
+            this.require(tokenTypesList.LPAR);
+            let variableNode = this.parseVariableOrNumber();
+            this.require(tokenTypesList.COMMA);
+            let thiskey = this.match(tokenTypesList.VARIABLE);
+            if (thiskey != null) {
+                let key = new KeyNode(thiskey);
+                this.require(tokenTypesList.COMMA);
+                let value = this.parseVariableOrNumber();
+                this.require(tokenTypesList.RPAR);
+                return new ObjectOperation(variableNode, key, value,operatorLog)
+        }
+            else {
+                throw new Error(`Ошибка на ${this.pos} позиции `)
+            }
+    }
+        operatorLog = this.match(tokenTypesList.HASHCLEAR);             //обработка очистки
+        if (operatorLog == null)
+        {
+            operatorLog = this.match(tokenTypesList.HASHSIZE);
+        }
+        if (operatorLog != null) {
+            return this.parseSize(operatorLog);
+        }
+
+        operatorLog = this.match(tokenTypesList.HASHREMOVE);
+        if (operatorLog == null)
+        {
+            operatorLog = this.match(tokenTypesList.HASHGET);
+        }
+        if (operatorLog != null) {
+            return this.parseGet(operatorLog)
+        }
+        throw new Error(`Ошибка на ${this.pos} позиции `)
+    }
 
     parseLogic(): ExpressionNode {                                                  //функция сравнения двух переменных
         let leftNode = this.parseParentheses();
@@ -130,54 +189,55 @@ export default class Parser {        // Помимо парсера в функ�
         while (operator != null) {
             const rightNode = this.parseParentheses();
             leftNode = new BinOperationNode(operator, leftNode, rightNode);
-            operator = this.match(  tokenTypesList.LOGIC);}
-    return leftNode;
-}
-
-    parseELSE(operatorLog: Token | null,PostIf: ExpressionNode): ExpressionNode | null{                    //Обработка else
-            if (operatorLog != null) {
-                    let Cycle = this.parseCycle();
-                    if (Cycle != undefined) {
-                        let FStep = this.NotFCondition(PostIf,PostIf);
-                        return new BinOperationNode(operatorLog,Cycle, FStep)
-                    }
-            }
-        return null
+            operator = this.match(tokenTypesList.LOGIC);
+        }
+        return leftNode;
     }
 
-    parseELSEIF(operatorLog: Token | null,PostIf: ExpressionNode): ExpressionNode | null{                    //Обработка else
-        if (this.match(tokenTypesList.LPAR) != null) {
-            let CycleChek = this.parseLogic();
-            this.require(tokenTypesList.RPAR);
-        if ((CycleChek != null) && (operatorLog != null)) {
+    parseELSE(operatorLog: Token | null, PostIf: ExpressionNode): ExpressionNode | null {                    //Обработка else
+        if (operatorLog != null) {
             let Cycle = this.parseCycle();
             if (Cycle != undefined) {
-                let FStep = this.NotFCondition(PostIf,CycleChek);
-                return new BinOperationNode(operatorLog,Cycle, FStep)
+                let FStep = this.NotFCondition(PostIf, PostIf);
+                return new BinOperationNode(operatorLog, Cycle, FStep)
             }
-        }
         }
         return null
     }
 
-    parseIf(operatorLog: Token | null): ExpressionNode | null{              //Обработка while, if и else if
+    parseELSEIF(operatorLog: Token | null, PostIf: ExpressionNode): ExpressionNode | null {                    //Обработка else
         if (this.match(tokenTypesList.LPAR) != null) {
             let CycleChek = this.parseLogic();
             this.require(tokenTypesList.RPAR);
-                if ((CycleChek != null) && (operatorLog != null))  {
-                    let Cycle = this.parseCycle();
-                    if (Cycle != undefined) {
-                        return new BinOperationNode(operatorLog,Cycle, CycleChek)
-               }
+            if ((CycleChek != null) && (operatorLog != null)) {
+                let Cycle = this.parseCycle();
+                if (Cycle != undefined) {
+                    let FStep = this.NotFCondition(PostIf, CycleChek);
+                    return new BinOperationNode(operatorLog, Cycle, FStep)
+                }
+            }
+        }
+        return null
+    }
+
+    parseIf(operatorLog: Token | null): ExpressionNode | null {              //Обработка while, if и else if
+        if (this.match(tokenTypesList.LPAR) != null) {
+            let CycleChek = this.parseLogic();
+            this.require(tokenTypesList.RPAR);
+            if ((CycleChek != null) && (operatorLog != null)) {
+                let Cycle = this.parseCycle();
+                if (Cycle != undefined) {
+                    return new BinOperationNode(operatorLog, Cycle, CycleChek)
+                }
             }
         }
         return null
     }
 
 
-    parseCycle(): ExpressionNode | null{                                //обработка вложенного цикла
-                    this.require(tokenTypesList.CycleBeg);
-                        return this.parseCode(true);
+    parseCycle(): ExpressionNode | null {                                //обработка вложенного цикла
+        this.require(tokenTypesList.CycleBeg);
+        return this.parseCode(true);
     }
 
 
@@ -192,7 +252,7 @@ export default class Parser {        // Помимо парсера в функ�
     }
 
 
-    priority(a: Token | null, b:any): number {                  //Установка приоритета заполнения ПОЛИЗа
+    priority(a: Token | null, b: any): number {                  //Установка приоритета заполнения ПОЛИЗа
         if (a != null) {
             if (a.type == tokenTypesList.OP) {
                 if (b != null) {
@@ -203,7 +263,7 @@ export default class Parser {        // Помимо парсера в функ�
                 }
             }
             if (b != null) {
-               return 1;
+                return 1;
             }
             return 3;
         } else {
@@ -211,11 +271,11 @@ export default class Parser {        // Помимо парсера в функ�
         }
     }
 
-    parseBinOperation(a:any,b:any,c:any): ExpressionNode {                  //Создание формул из переменых или других формул
-            return new BinOperationNode(a, b, c);
+    parseBinOperation(a: any, b: any, c: any): ExpressionNode {                  //Создание формул из переменых или других формул
+        return new BinOperationNode(a, b, c);
     }
 
-    Calculation(MyRPN: RPN): ExpressionNode  {                         //Обработка полиза в виде выражений
+    Calculation(MyRPN: RPN): ExpressionNode {                         //Обработка полиза в виде выражений
         let rightNode;
         let leftNode;
         let I1 = 0;
@@ -234,24 +294,32 @@ export default class Parser {        // Помимо парсера в функ�
             }
             I1 = I1 + 1;
         }
-        leftNode=FinalRPN.peek();
-        if (leftNode != undefined)
-        {
-        return leftNode;
+        leftNode = FinalRPN.peek();
+        if (leftNode != undefined) {
+            return leftNode;
         }
         throw new Error(`Не удалось произвести рассчёт`);
     }
 
     parseFormula(): ExpressionNode {                                        //Создание полиза и его распределение на операции
 
+        let operation = this.match(tokenTypesList.HASHSIZE);
+        if (operation != null)
+        {
+            return this.parseSize(operation)
+        }
+        operation = this.match(tokenTypesList.HASHGET);
+        if (operation != null) {
+            return this.parseGet(operation)
+        }
         let tokenadd = this.parseParentheses();                         //проверка на скобки и присвоение значения первой переменной
-        let operation = this.match(tokenTypesList.OP_1);   //присвоение значения первой операции
+        operation = this.match(tokenTypesList.OP_1);   //присвоение значения первой операции
         if (operation == null) {
             operation = this.match(tokenTypesList.OP);
         }
-        if ((operation == null) && (this.match(tokenTypesList.LOGIC)!=null)) {   //если это не математическая операция,
+        if ((operation == null) && (this.match(tokenTypesList.LOGIC) != null)) {   //если это не математическая операция,
             this.pos = this.pos - 2;                                             //её обработка  как логическую
-            tokenadd=this.parseLogic();
+            tokenadd = this.parseLogic();
         }
         let MyRPN = new RPN();                              //создание стека для хранения полиза
         let s = new stack<Token | null>();                  //создание промежуточного стека для операций
@@ -262,27 +330,25 @@ export default class Parser {        // Помимо парсера в функ�
             tokenadd = this.parseParentheses();
             this.pos = this.pos - 2;
             let korrekt = this.match(tokenTypesList.OP);    //Переменная для анализа нынешнего и предущего операторов
-            if (korrekt!= null) {                           //на случай умножения переменных
+            if (korrekt != null) {                           //на случай умножения переменных
                 this.pos = this.pos - 1;
             }
             if ((s.size() == 0) || ((s.size() != 0) && (this.priority(s.peek(), korrekt) == 2))) {  //Запись операции
                 s.push(operation);                                                          //в стек, если нет операции
                 CHek1 = CHek1 + 1;                                                          // с большим приоритетом
-            }
-
-           else if ((this.priority(s.peek(), korrekt) == 3))        //Случай, когда операции умножения/деления
-            {   if (Chekfirst) {                                    //идут последовательно
-                this.pos = this.pos - 2;
-                korrekt = this.match(tokenTypesList.OP_1);
-                this.pos=this.pos + 1;
-            }
+            } else if ((this.priority(s.peek(), korrekt) == 3))        //Случай, когда операции умножения/деления
+            {
+                if (Chekfirst) {                                    //идут последовательно
+                    this.pos = this.pos - 2;
+                    korrekt = this.match(tokenTypesList.OP_1);
+                    this.pos = this.pos + 1;
+                }
                 s.pop();
                 s.push(operation);
-                if (korrekt!= null) {
+                if (korrekt != null) {
                     MyRPN.push(korrekt);
                 }
-           }
-            else{
+            } else {
                 while ((s.size() != 0) && (this.priority(s.peek(), korrekt) == 1)) { //Перераспределение чисел в
                     operation = s.peek();                                            //стеке в случае
                     if (operation != null) {                                         //операции с большим приоритетом
@@ -301,7 +367,7 @@ export default class Parser {        // Помимо парсера в функ�
                 CHek1 = CHek1 + 1;
                 s.push(korrekt);
             }
-           this.pos = this.pos +  2;
+            this.pos = this.pos + 2;
             operation = this.match(tokenTypesList.OP_1);
             if (operation == null) {
                 operation = this.match(tokenTypesList.OP);
@@ -309,13 +375,13 @@ export default class Parser {        // Помимо парсера в функ�
         }
 
         MyRPN.push(tokenadd);
-            while (s.size() != 0) {                                 // добавление в полиз операций оставшихся в стеке
-                operation = s.peek();
-                if (operation != null) {
-                    MyRPN.push(operation);
-                    s.pop();
-                }
+        while (s.size() != 0) {                                 // добавление в полиз операций оставшихся в стеке
+            operation = s.peek();
+            if (operation != null) {
+                MyRPN.push(operation);
+                s.pop();
             }
+        }
         return this.Calculation(MyRPN);                 //Обработка полиза
     }
 
@@ -325,13 +391,27 @@ export default class Parser {        // Помимо парсера в функ�
             return this.parseCommand();
         }
         this.pos -= 1;
+            return this.parseAssing();
+    }
+
+    parseAssing(): ExpressionNode {
         let variableNode = this.parseVariableOrNumber();
         const assignOperator = this.match(tokenTypesList.ASSIGN);
-        if (assignOperator != null) {                                   //Обработка присвоения
-            const rightFormulaNode = this.parseFormula();
-            return new BinOperationNode(assignOperator, variableNode, rightFormulaNode);
+        if (assignOperator != null) {
+            if (this.match(tokenTypesList.NEW) == null) {
+                const rightFormulaNode = this.parseFormula();
+                return new BinOperationNode(assignOperator, variableNode, rightFormulaNode);
+            }
+            else {
+                const rightFormulaNode = this.match(tokenTypesList.HASHMAP);
+                this.require(tokenTypesList.LPAR);
+                this.require(tokenTypesList.RPAR);
+                if (rightFormulaNode != null) {
+                    return new ObjectNode(assignOperator, variableNode, rightFormulaNode);
+                }
+            }
         }
-        throw new Error(`После переменной ожидается оператор присвоения на позиции ${this.pos}`);
+            throw new Error(`После переменной ожидается оператор присвоения на позиции ${this.pos}`);
     }
 
     parseCode(In?: boolean): ExpressionNode {                   //чтение токенов, входная переменная нужна
@@ -349,5 +429,5 @@ export default class Parser {        // Помимо парсера в функ�
         return root;
     }
 
-}
 
+}
