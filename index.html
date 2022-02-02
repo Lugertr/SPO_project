@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="index.css" rel="stylesheet">
+    <title>Document</title>
+</head>
+<body>
+    <section id = "area">
+        <div class = "text">
+            <h1>Примеры</h1>
+                <button class = "btnExm">Простая операция</button>
+                <button class = "btnExm">условие if</button>
+                <button class = "btnExm">условие if и else</button>
+                <button class = "btnExm">while</button>
+                <button class = "btnExm">Бессконечные скобки</button>
+                <button class = "btnExm">Создание объекта Map</button>
+                <button class = "btnExm">Добавление элемента в Map</button>
+                <button class = "btnExm">применение get в Map</button>
+                <button class = "btnExm">Удаление по ключу в Map</button>
+                <button class = "btnExm">Получение размера элемента</button>
+                <button class = "btnExm">Очистка map</button>
+        </div>
+    <div id = "central">
+    <textarea id="in" value=''></textarea>
+    <div id="buttonErea">
+    <button class="btn" id="comp">Компилировать</button>
+    <button class="btn" id="clr">Очистка</button>
+    </div>
+    <textarea id='out' readonly="readonly"></textarea>
+    </div>
+    <div class = "text">
+        <h1>Информация</h1>
+        <p id="info"></p>
+    </div>
+    </section>
+    <script type="module">
+        import {loadModule} from 'https://klesun.github.io/ts-browser/src/ts-browser.js';
+        loadModule('src/index.ts');
+    </script>
+</body>
+</html>
