@@ -1,6 +1,0 @@
-a = new HashMap();
-put (a,bb,2);
-put (a,bbb,5);
-print a;
-clear(a);
-print a;

@@ -1,3 +1,0 @@
-a = new HashMap();
-put (a,bb,2);
-print get(a,bb);
