@@ -1,3 +1,0 @@
- operation = 5;
- operation = operation + 10 / 2 * 7 - 12 * 2 / 3;
- print operation;
